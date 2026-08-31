@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#FF8A65">
+<meta name="description" content="帮小朋友记录每天的家庭作业，按科目管理，再也不怕忘记啦">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="作业小管家">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>作业小管家</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <header id="header"></header>
+  <main id="main"></main>
+  <nav id="tabbar">
+    <button class="tab active" data-tab="home"><span class="tab-ico">📝</span><span>作业</span></button>
+    <button class="tab" data-tab="stats"><span class="tab-ico">🌟</span><span>打卡</span></button>
+    <button class="tab" data-tab="timer"><span class="tab-ico">⏰</span><span>番茄钟</span></button>
+    <button class="tab" data-tab="settings"><span class="tab-ico">⚙️</span><span>设置</span></button>
+  </nav>
+</div>
+
+<!-- 添加 / 编辑作业弹窗 -->
+<div id="modal" class="modal hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3 id="modal-title">添加作业</h3>
+      <button type="button" id="modal-close" class="icon-btn" aria-label="关闭">✕</button>
+    </div>
+    <form id="hw-form">
+      <label class="field">
+        <span class="field-label">科目</span>
+        <select id="f-subject" required></select>
+      </label>
+      <label class="field">
+        <span class="field-label">作业内容</span>
+        <input id="f-title" type="text" placeholder="比如：练习册第 12 页" required maxlength="60" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="field-label">备注（可不填）</span>
+        <input id="f-note" type="text" placeholder="比如：记得带图画本" maxlength="100" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="field-label">截止日期（可不填）</span>
+        <input id="f-due" type="date">
+      </label>
+      <div id="form-actions">
+        <button type="button" id="f-delete" class="btn danger hidden">删除</button>
+        <button type="submit" id="f-save" class="btn primary">保存 ✨</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 安装到桌面提示条 -->
+<div id="install-banner" class="install-banner hidden">
+  <span>📲 把「作业小管家」安装到手机桌面，用起来更像真正的 app</span>
+  <button type="button" id="install-yes" class="btn primary small">安装</button>
+  <button type="button" id="install-no" class="icon-btn" aria-label="稍后再说">✕</button>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- 备份导入输入框（隐藏，供设置页触发） -->
+<input type="file" id="import-file" accept=".json,application/json" class="hidden">
+
+<script src="js/app.js"></script>
+</body>
+</html>

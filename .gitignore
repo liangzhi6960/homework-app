@@ -1,0 +1,8 @@
+# 本地构建工具链（JDK/Android SDK/密钥等），体积大且含密钥，不上传到 GitHub
+android-build/
+
+# 临时与日志
+*.log
+*.tmp
+Thumbs.db
+.DS_Store

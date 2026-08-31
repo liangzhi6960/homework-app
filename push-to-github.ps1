@@ -34,10 +34,16 @@ try {
     & $gh auth status 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "首次使用，需要登录你的 GitHub 账号：" -ForegroundColor Green
-        Write-Host " 1) 浏览器会自动打开授权页面（若没打开，手动复制窗口里显示的网址）"
-        Write-Host " 2) 在网页里输入窗口中显示的「一次性代码」，点 Authorize 授权"
-        Write-Host " 3) 回到本窗口等待提示成功"
+        Write-Host "----------------------------------------------------------" -ForegroundColor Cyan
+        Write-Host "接下来请看本窗口【最底部】出现的一行英文：" -ForegroundColor Green
+        Write-Host "   First copy your one-time code: XXXXXXXX" -ForegroundColor White
+        Write-Host "   （斜杠后面那 8 个字符就是一次性代码，比如 DCB0-7BCF）" -ForegroundColor Green
+        Write-Host "浏览器会自动打开 GitHub 的代码输入页（若没打开，手动访问 https://github.com/login/device）"
+        Write-Host "把这 8 位代码填进网页 -> 点 Continue -> 点 Authorize -> 回到本窗口等成功提示"
+        Write-Host "----------------------------------------------------------" -ForegroundColor Cyan
         Write-Host ""
+        # 先打开代码输入页，再启动 gh 登录
+        try { Start-Process "https://github.com/login/device" } catch { }
         "y" | & $gh auth login --web --git-protocol https --hostname github.com
         if ($LASTEXITCODE -ne 0) {
             Write-Host "登录失败（退出码 $LASTEXITCODE），请重新运行本脚本再试。" -ForegroundColor Yellow

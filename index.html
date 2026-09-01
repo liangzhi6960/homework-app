@@ -42,7 +42,12 @@
       </label>
       <label class="field">
         <span class="field-label">作业内容</span>
-        <input id="f-title" type="text" placeholder="比如：练习册第 12 页" required maxlength="60" autocomplete="off">
+        <div class="input-row">
+          <input id="f-title" type="text" placeholder="比如：练习册第 12 页" required maxlength="60" autocomplete="off">
+          <button type="button" id="mic-btn" class="mic-btn hidden" aria-label="语音输入">🎤</button>
+        </div>
+        <div id="mic-status" class="mic-status hidden"></div>
+        <div id="mic-hint" class="mic-hint hidden">💬 也可以点手机键盘上的麦克风小图标，说话输入作业内容</div>
       </label>
       <label class="field">
         <span class="field-label">备注（可不填）</span>

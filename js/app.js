@@ -660,11 +660,14 @@ function openModal(id) {
   $('#f-due').value = h ? h.due : '';
   $('#modal-title').textContent = id ? '编辑作业' : '添加作业';
   $('#f-delete').classList.toggle('hidden', !id);
+  resetVoiceUI();
+  initVoiceUI();
   $('#modal').classList.remove('hidden');
   setTimeout(() => $('#f-title').focus(), 120);
 }
 
 function closeModal() {
+  resetVoiceUI();
   $('#modal').classList.add('hidden');
   state.editingId = null;
 }
@@ -672,6 +675,118 @@ function closeModal() {
 function openModalForSubject(subject) {
   openModal();
   $('#f-subject').value = subject;
+}
+
+/* ================= 语音输入 ================= */
+const SR_API = window.SpeechRecognition || window.webkitSpeechRecognition;
+let speechRec = null;
+let speechActive = false;
+
+function voiceSupported() { return !!(window.HWSpeech || SR_API); }
+
+function setMicUI(active) {
+  const mic = $('#mic-btn');
+  if (!mic) return;
+  mic.textContent = active ? '⏹' : '🎤';
+  mic.classList.toggle('listening', active);
+}
+
+function resetVoiceUI() {
+  speechActive = false;
+  setMicUI(false);
+  const st = $('#mic-status');
+  if (st) { st.classList.add('hidden'); st.textContent = ''; }
+  if (speechRec) { try { speechRec.abort(); } catch (e) { /* 忽略 */ } speechRec = null; }
+}
+
+function initVoiceUI() {
+  const mic = $('#mic-btn');
+  const hint = $('#mic-hint');
+  if (!mic) return;
+  if (voiceSupported()) {
+    mic.classList.remove('hidden');
+    if (hint) hint.classList.add('hidden');
+  } else {
+    mic.classList.add('hidden');
+    if (hint) hint.classList.remove('hidden');
+  }
+}
+
+function micStatus(msg, interim) {
+  const st = $('#mic-status');
+  if (!st) return;
+  st.textContent = msg;
+  st.classList.toggle('interim', !!interim);
+  st.classList.remove('hidden');
+}
+
+function onMicClick() {
+  if (speechActive) { resetVoiceUI(); return; }
+  if (window.HWSpeech) {
+    startNativeVoice();
+  } else if (SR_API) {
+    startWebSpeech();
+  } else {
+    toast('当前环境不支持语音，请点手机键盘上的麦克风 🎤');
+  }
+}
+
+function startWebSpeech() {
+  try {
+    speechRec = new SR_API();
+    speechRec.lang = 'zh-CN';
+    speechRec.interimResults = true;
+    speechRec.maxAlternatives = 1;
+    speechRec.onstart = () => { speechActive = true; setMicUI(true); micStatus('正在听…请说作业内容'); };
+    speechRec.onresult = (e) => {
+      let final = '', interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t; else interim += t;
+      }
+      const input = $('#f-title');
+      if (final) {
+        input.value = (input.value.trim() ? input.value.trim() + ' ' : '') + final;
+        micStatus('已识别：' + final);
+        resetVoiceUI();
+      } else if (interim) {
+        micStatus('识别中：' + interim, true);
+      }
+    };
+    speechRec.onerror = (e) => {
+      const msg = e.error === 'not-allowed' ? '麦克风权限被拒绝，请在浏览器设置里允许' :
+                  (e.error === 'no-speech' ? '没听到声音，再试一次' : '语音识别失败：' + e.error);
+      resetVoiceUI();
+      toast(msg);
+    };
+    speechRec.onend = () => { if (speechActive) resetVoiceUI(); };
+    speechRec.start();
+  } catch (e) {
+    toast('无法启动语音输入');
+  }
+}
+
+function startNativeVoice() {
+  window.__hwSpeechCb = function (res) {
+    if (res && res.state === 'listening') {
+      speechActive = true; setMicUI(true);
+      micStatus('正在听…请说作业内容');
+      return;
+    }
+    speechActive = false; setMicUI(false);
+    const st = $('#mic-status');
+    if (st) st.classList.add('hidden');
+    if (res && res.error) {
+      const msg = res.error.indexOf('permission') >= 0 ? '麦克风权限被拒绝，请在系统设置里允许' :
+                  (res.error.indexOf('no_match') >= 0 ? '没听清，再试一次' : '语音识别失败（' + res.error + '）');
+      toast(msg);
+    } else if (res && res.text) {
+      const input = $('#f-title');
+      input.value = (input.value.trim() ? input.value.trim() + ' ' : '') + res.text;
+      toast('已识别：' + res.text);
+    }
+  };
+  try { window.HWSpeech.startVoice(); } catch (e) { toast('无法启动语音输入'); }
 }
 
 /* ================= 科目管理 ================= */
@@ -758,6 +873,7 @@ function bindEvents() {
   });
 
   // 弹窗
+  $('#mic-btn').addEventListener('click', onMicClick);
   $('#modal-close').addEventListener('click', closeModal);
   $('#modal').addEventListener('click', e => { if (e.target === $('#modal')) closeModal(); });
   $('#f-delete').addEventListener('click', () => {

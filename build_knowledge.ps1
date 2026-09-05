@@ -107,6 +107,15 @@ function Build-Subject($key) {
   if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
   New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
 
+  # 0) 自动从源 PDF 文件夹复制（若 C:\pdfwork 下还没有）
+  if (-not (Test-Path $cfg.file)) {
+    $srcDir = Join-Path $root '初中学科思维导图PDF'
+    $pdf = Get-ChildItem (Join-Path $srcDir "*$($cfg.name)*.pdf") | Select-Object -First 1
+    if (-not $pdf) { Write-Host "找不到 $($cfg.name) 的源 PDF"; return }
+    Copy-Item $pdf.FullName $cfg.file -Force
+    Write-Host "已复制源 PDF: $($pdf.Name)"
+  }
+
   # 1) 渲染所有页
   Write-Host "渲染页面（最长边 ${SCALE}px）..."
   & $pdftoppm -jpeg -jpegopt "quality=$JPEG_QUALITY" -scale-to $SCALE $cfg.file (Join-Path $tmpDir 'p') 2>$null

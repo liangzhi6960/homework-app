@@ -16,16 +16,20 @@ $env:PATH = "$jdkDir\bin;$env:PATH"
 
 Write-Host "== 1/8 同步网页资源到 assets =="
 $www = Join-Path $app 'assets\www'
-foreach ($d in @('css','js','icons')) {
+foreach ($d in @('css','js','icons','knowledge')) {
     $t = Join-Path $www $d
     if (Test-Path $t) { Remove-Item $t -Recurse -Force }
 }
 Copy-Item (Join-Path $root 'index.html') $www -Force
 Copy-Item (Join-Path $root 'manifest.webmanifest') $www -Force
 Copy-Item (Join-Path $root 'sw.js') $www -Force
+Copy-Item (Join-Path $root 'knowledge-data.js') $www -Force
 Copy-Item (Join-Path $root 'css') (Join-Path $www 'css') -Recurse -Force
 Copy-Item (Join-Path $root 'js') (Join-Path $www 'js') -Recurse -Force
 Copy-Item (Join-Path $root 'icons') (Join-Path $www 'icons') -Recurse -Force
+if (Test-Path (Join-Path $root 'knowledge')) {
+    Copy-Item (Join-Path $root 'knowledge') (Join-Path $www 'knowledge') -Recurse -Force
+}
 
 Write-Host "== 2/8 准备构建目录 C:\hwbuild =="
 if (Test-Path $hw) { Remove-Item $hw -Recurse -Force }

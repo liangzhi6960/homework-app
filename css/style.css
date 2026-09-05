@@ -280,3 +280,62 @@ input, select, textarea { font-family: inherit; font-size: 16px; color: var(--te
   animation: fall 1.8s ease-in forwards; z-index: 70;
 }
 @keyframes fall { to { transform: translateY(106vh) rotate(720deg); opacity: .15; } }
+
+/* ================= 知识库 ================= */
+.kb-subj {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 14px; margin-bottom: 10px;
+}
+.kb-subj .ico {
+  width: 46px; height: 46px; flex: none; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  color: #fff;
+}
+.kb-subj .name { font-size: 17px; font-weight: 700; }
+.kb-subj .cnt { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+.kb-subj .go { margin-left: auto; font-size: 18px; color: var(--text-soft); }
+
+.kb-toolbar {
+  position: sticky; top: 0; z-index: 12;
+  display: flex; gap: 8px; align-items: center;
+  background: var(--bg); padding: 4px 0 10px;
+}
+.kb-toolbar .back { padding: 7px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; box-shadow: var(--shadow); display:flex; align-items:center; gap:4px; }
+.kb-toolbar .pos { font-size: 13px; color: var(--text-soft); margin: 0 auto; }
+.kb-toolbar .zt { flex: none; width: 38px; height: 34px; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); font-size: 15px; }
+
+.kb-page-list .page-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: 14px; box-shadow: var(--shadow);
+  padding: 12px 14px; margin-bottom: 8px;
+}
+.page-item .pn {
+  flex: none; min-width: 44px; text-align: center;
+  font-size: 13px; font-weight: 700; color: var(--primary-dark);
+  background: #FFF1EA; border-radius: 10px; padding: 8px 6px;
+}
+.page-item .tt { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.page-item .arr { margin-left: auto; color: var(--text-soft); }
+
+/* 阅读器 */
+#kb-reader {
+  position: relative; margin: 0 -16px; height: calc(100dvh - 230px);
+  background: #F1EAE2; border-radius: 14px; overflow: hidden;
+}
+#kb-scroll {
+  position: absolute; inset: 0; overflow: auto; -webkit-overflow-scrolling: touch;
+  display: flex;
+}
+#kb-img { margin: auto; display: block; max-width: none; }
+.kb-reader-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 4px 2px;
+}
+.kb-reader-bar .rbtn {
+  flex: 1; padding: 9px 0; border-radius: 11px; background: var(--surface);
+  box-shadow: var(--shadow); font-size: 14px; font-weight: 600; text-align: center;
+}
+.kb-reader-bar .rbtn.mini { flex: none; width: 44px; font-size: 15px; }
+.kb-pos { flex: 1; text-align: center; font-size: 13px; color: var(--text-soft); }
+.kb-tip { text-align: center; font-size: 11px; color: #B9A89B; padding: 4px 0 0; }

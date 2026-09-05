@@ -98,7 +98,8 @@ let data = load();
 const state = {
   tab: 'home',
   filter: 'pending',   // pending | today | overdue | done
-  editingId: null
+  editingId: null,
+  kb: { view: 'home', subjId: null, page: 1, zoom: 1 }  // 知识库：home | pages | view
 };
 
 /* ================= 轻提示 ================= */
@@ -379,8 +380,21 @@ function renderHeader() {
     timer: ['⏰ 番茄钟', '专注 25 分钟，休息 5 分钟'],
     settings: ['⚙️ 设置', '科目、数据都在这儿']
   };
-  const [t1, t2] = titles[state.tab];
   const header = $('#header');
+  if (state.tab === 'kb') {
+    const s = kbSubject();
+    if (state.kb.view === 'view') {
+      header.innerHTML = '<div class="greet">' + (s ? s.name : '知识库') + '</div>' +
+        '<div class="sub">第 ' + state.kb.page + ' 页 · 双指缩放 / 双击放大</div>';
+    } else if (state.kb.view === 'pages') {
+      header.innerHTML = '<div class="greet">' + (s ? s.name : '知识库') + '</div>' +
+        '<div class="sub">共 ' + (s ? s.pageCount : 0) + ' 页知识点 · 点选查看</div>';
+    } else {
+      header.innerHTML = '<div class="greet">📚 知识库</div><div class="sub">初中各科知识点思维导图</div>';
+    }
+    return;
+  }
+  const [t1, t2] = titles[state.tab];
   if (state.tab === 'home') {
     const d = new Date();
     const w = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
@@ -641,9 +655,191 @@ function render() {
   if (state.tab === 'home') renderHome();
   else if (state.tab === 'stats') renderStats();
   else if (state.tab === 'timer') renderTimer();
+  else if (state.tab === 'kb') renderKB();
   else renderSettings();
   const fab = $('#fab');
   if (fab && state.tab !== 'home') fab.classList.add('hidden');
+}
+
+/* ================= 知识库 ================= */
+const KB_EMOJI = { math: '📐', chinese: '📖', english: '🔤', physics: '⚡', chemistry: '⚗️', history: '🏛️', politics: '📜' };
+const KB_COLOR = { math: '#5B8DEF', chinese: '#4CAF93', english: '#9C6ADE', physics: '#F4A636', chemistry: '#26A69A', history: '#8D6E63', politics: '#EF6E6E' };
+
+function kbSubject() {
+  const arr = (typeof KB_SUBJECTS !== 'undefined') ? KB_SUBJECTS : [];
+  return arr.find(function (s) { return s.id === state.kb.subjId; }) || null;
+}
+
+function kbPageList(s) {
+  if (s && s.pages) return s.pages;
+  const out = [];
+  if (s) { for (let i = 1; i <= s.pageCount; i++) out.push({ n: i, title: '第 ' + i + ' 页' }); }
+  return out;
+}
+
+function renderKB() {
+  const v = state.kb.view;
+  const s = kbSubject();
+  const main = $('#main');
+
+  if (v === 'view') { renderKBViewer(); return; }
+
+  if (v === 'pages') {
+    const pages = kbPageList(s);
+    const rows = pages.map(function (p) {
+      return '<div class="page-item" data-action="kb-page" data-page="' + p.n + '">' +
+        '<span class="pn">P' + p.n + '</span>' +
+        '<span class="tt">' + esc(p.title) + '</span>' +
+        '<span class="arr">›</span></div>';
+    }).join('');
+    main.innerHTML =
+      '<div class="kb-toolbar">' +
+        '<button type="button" class="back" data-action="kb-back">‹ 科目</button>' +
+        '<span class="pos">目录</span>' +
+      '</div>' +
+      '<div class="kb-page-list">' + (rows || '<div class="empty">本册还没有内容</div>') + '</div>';
+    return;
+  }
+
+  // home：科目列表
+  const arr = (typeof KB_SUBJECTS !== 'undefined') ? KB_SUBJECTS : [];
+  const cards = arr.map(function (s2) {
+    const col = KB_COLOR[s2.id] || '#FF8A65';
+    const em = KB_EMOJI[s2.id] || '📘';
+    return '<div class="kb-subj" data-action="kb-open" data-id="' + s2.id + '">' +
+      '<span class="ico" style="background:' + col + '">' + em + '</span>' +
+      '<span><div class="name">' + esc(s2.name) + '</div>' +
+      '<div class="cnt">' + s2.pageCount + ' 页知识点思维导图</div></span>' +
+      '<span class="go">›</span></div>';
+  }).join('');
+  main.innerHTML = cards ||
+    '<div class="empty"><div class="big">📚</div>知识库正在生成中…<br><span style="font-size:13px">运行 build_knowledge.ps1 生成目录数据</span></div>';
+}
+
+function openKBSubject(id) {
+  state.kb.subjId = id;
+  state.kb.view = 'pages';
+  state.kb.page = 1;
+  render();
+}
+
+function openKBPage(n) {
+  state.kb.page = n;
+  state.kb.view = 'view';
+  state.kb.zoom = 1;
+  render();
+}
+
+function kbBack() {
+  if (state.kb.view === 'view') {
+    state.kb.view = 'pages';
+    render();
+  } else if (state.kb.view === 'pages') {
+    state.kb.view = 'home';
+    state.kb.subjId = null;
+    render();
+  }
+}
+
+function renderKBViewer() {
+  const s = kbSubject();
+  const main = $('#main');
+  const total = s ? s.pageCount : 1;
+  let p = state.kb.page;
+  if (p < 1) p = 1;
+  if (p > total) p = total;
+  state.kb.page = p;
+  const src = 'knowledge/' + encodeURIComponent(s ? s.id : '') + '/pages/' + String(p).padStart(3, '0') + '.jpg';
+  main.innerHTML =
+    '<div class="kb-toolbar">' +
+      '<button type="button" class="back" data-action="kb-back">‹ 目录</button>' +
+      '<span class="pos">' + p + ' / ' + total + '</span>' +
+    '</div>' +
+    '<div id="kb-reader"><div id="kb-scroll">' +
+      '<img id="kb-img" src="' + src + '" alt="第' + p + '页">' +
+    '</div></div>' +
+    '<div class="kb-reader-bar">' +
+      '<button type="button" class="rbtn mini" data-action="kb-zoomout">−</button>' +
+      '<button type="button" class="rbtn mini" data-action="kb-fit">适应</button>' +
+      '<button type="button" class="rbtn mini" data-action="kb-zoomin">＋</button>' +
+      '<button type="button" class="rbtn" data-action="kb-prev">◀ 上一页</button>' +
+      '<button type="button" class="rbtn" data-action="kb-next">下一页 ▶</button>' +
+    '</div>' +
+    '<div class="kb-tip">提示：图片上双指捏合缩放、双击放大，可上下左右拖动查看细节</div>';
+  kbFitImage(true);
+  bindKBReaderGestures();
+}
+
+function kbFitImage(force) {
+  const img = $('#kb-img');
+  const wrap = $('#kb-scroll');
+  if (!img || !wrap) return;
+  const w = wrap.clientWidth;
+  if (!w) return;
+  const zoom = state.kb.zoom;
+  img.style.width = Math.round(w * zoom) + 'px';
+  img.style.height = 'auto';
+  if (force) {
+    // 放大后回到顶部
+    wrap.scrollTop = 0;
+    wrap.scrollLeft = 0;
+  }
+}
+
+function kbZoomBy(f) {
+  let z = state.kb.zoom * f;
+  z = Math.max(0.6, Math.min(6, z));
+  state.kb.zoom = z;
+  kbFitImage(false);
+}
+
+function kbZoomFit() {
+  state.kb.zoom = 1;
+  kbFitImage(false);
+}
+
+function bindKBReaderGestures() {
+  const img = $('#kb-img');
+  const wrap = $('#kb-scroll');
+  if (!img || !wrap) return;
+
+  // 双击放大/缩小
+  img.addEventListener('dblclick', function () {
+    kbZoomBy(state.kb.zoom >= 2 ? 0.5 : 2);
+  });
+  // 移动端双击
+  let lastTap = 0;
+  img.addEventListener('touchend', function (e) {
+    const now = Date.now();
+    if (now - lastTap < 350 && e.changedTouches.length === 1) {
+      kbZoomBy(state.kb.zoom >= 2 ? 0.5 : 2);
+      e.preventDefault();
+    }
+    lastTap = now;
+  });
+
+  // 双指捏合缩放
+  let pinchStart = null;
+  wrap.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) {
+      pinchStart = dist(e.touches);
+      lastTap = 0;
+    }
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 2 && pinchStart) {
+      e.preventDefault();
+      const d = dist(e.touches);
+      if (d > 0 && pinchStart > 0) {
+        kbZoomBy(d / pinchStart);
+      }
+      pinchStart = d;
+    }
+  }, { passive: false });
+
+  function dist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  }
 }
 
 /* ================= 弹窗（添加/编辑作业） ================= */
@@ -854,6 +1050,22 @@ function bindEvents() {
       if (confirm('确定要清空所有数据（作业、打卡、科目）吗？此操作不可恢复！') &&
           confirm('真的要全部重置吗？')) resetAll();
     }
+    // 知识库
+    else if (action === 'kb-open') openKBSubject(btn.dataset.id);
+    else if (action === 'kb-page') openKBPage(parseInt(btn.dataset.page, 10));
+    else if (action === 'kb-back') kbBack();
+    else if (action === 'kb-prev') {
+      state.kb.page = Math.max(1, state.kb.page - 1);
+      state.kb.zoom = 1;
+      render();
+    } else if (action === 'kb-next') {
+      const s = kbSubject();
+      state.kb.page = Math.min(s ? s.pageCount : 1, state.kb.page + 1);
+      state.kb.zoom = 1;
+      render();
+    } else if (action === 'kb-zoomin') kbZoomBy(1.4);
+    else if (action === 'kb-zoomout') kbZoomBy(0.72);
+    else if (action === 'kb-fit') kbZoomFit();
   });
 
   // 导入文件

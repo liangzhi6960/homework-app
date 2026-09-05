@@ -24,6 +24,7 @@
     <button class="tab active" data-tab="home"><span class="tab-ico">📝</span><span>作业</span></button>
     <button class="tab" data-tab="stats"><span class="tab-ico">🌟</span><span>打卡</span></button>
     <button class="tab" data-tab="timer"><span class="tab-ico">⏰</span><span>番茄钟</span></button>
+    <button class="tab" data-tab="kb"><span class="tab-ico">📚</span><span>知识库</span></button>
     <button class="tab" data-tab="settings"><span class="tab-ico">⚙️</span><span>设置</span></button>
   </nav>
 </div>
@@ -77,6 +78,8 @@
 <!-- 备份导入输入框（隐藏，供设置页触发） -->
 <input type="file" id="import-file" accept=".json,application/json" class="hidden">
 
+<!-- 知识库目录数据（由 build_knowledge.ps1 生成） -->
+<script src="knowledge-data.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
